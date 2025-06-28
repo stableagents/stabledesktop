@@ -2,7 +2,7 @@
 
 > **Transform natural language into production-ready desktop applications**
 
-Stable Agents is a revolutionary tool that replaces traditional frameworks like Electron, enabling developers to create sophisticated desktop applications using simple natural language descriptions. No more complex setup, boilerplate code, or framework-specific knowledge required.
+Stable Desktops is a revolutionary tool that replaces traditional frameworks like Electron, enabling developers to create sophisticated desktop applications using simple natural language descriptions. No more complex setup, boilerplate code, or framework-specific knowledge required.
 
 ## ✨ Features
 

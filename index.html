@@ -132,7 +132,18 @@
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
             overflow: hidden;
             z-index: 100;
+            min-width: 350px;
+            min-height: 200px;
         }
+
+        .terminal-window.resizing-n { cursor: n-resize !important; }
+        .terminal-window.resizing-s { cursor: s-resize !important; }
+        .terminal-window.resizing-e { cursor: e-resize !important; }
+        .terminal-window.resizing-w { cursor: w-resize !important; }
+        .terminal-window.resizing-ne { cursor: ne-resize !important; }
+        .terminal-window.resizing-nw { cursor: nw-resize !important; }
+        .terminal-window.resizing-se { cursor: se-resize !important; }
+        .terminal-window.resizing-sw { cursor: sw-resize !important; }
 
         .terminal-header {
             height: 32px;
@@ -483,6 +494,63 @@
             font-weight: 600;
             display: inline-block;
         }
+        #appWindows {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 200;
+        }
+        .app-window {
+            position: absolute;
+            top: 120px;
+            left: 120px;
+            width: 400px;
+            min-width: 220px;
+            min-height: 120px;
+            background: #23272e;
+            border-radius: 10px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+            overflow: hidden;
+            z-index: 201;
+            pointer-events: auto;
+            display: flex;
+            flex-direction: column;
+        }
+        .app-window-header {
+            height: 32px;
+            background: #2d2d2d;
+            display: flex;
+            align-items: center;
+            padding: 0 12px;
+            border-bottom: 1px solid #404040;
+            cursor: move;
+            user-select: none;
+        }
+        .app-window-title {
+            color: #fff;
+            font-size: 15px;
+            font-weight: 500;
+            flex: 1;
+        }
+        .app-window-close {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #ff5f56;
+            margin-left: 8px;
+            cursor: pointer;
+            border: none;
+        }
+        .app-window-content {
+            flex: 1;
+            background: #23272e;
+            color: #fff;
+            padding: 18px;
+            font-size: 16px;
+        }
     </style>
 </head>
 <body>
@@ -574,22 +642,6 @@
             </div>
         </div>
 
-        <!-- Desktop Icons -->
-        <div class="desktop-icons">
-            <div class="desktop-icon">
-                <div class="icon">💻</div>
-                <div class="icon-label">Macintosh HD</div>
-            </div>
-            <div class="desktop-icon">
-                <div class="icon">📁</div>
-                <div class="icon-label">Documents</div>
-            </div>
-            <div class="desktop-icon">
-                <div class="icon">📁</div>
-                <div class="icon-label">Downloads</div>
-            </div>
-        </div>
-
         <!-- Terminal Window -->
         <div class="terminal-window" id="terminalWindow">
             <div class="terminal-header">
@@ -602,10 +654,7 @@
             </div>
             <div class="terminal-body">
                 <div class="terminal-content" id="terminalContent">
-                    <div class="terminal-line">
-                        <span class="prompt">user@macbook-pro ~ %</span>
-                        <span class="command-input" id="commandInput" contenteditable="true"></span>
-                    </div>
+                    <!-- Initial prompt removed; handled by JS -->
                 </div>
             </div>
         </div>
@@ -653,13 +702,15 @@
                 <div class="dock-label">Notes</div>
             </div>
         </div>
+
+        <!-- App Windows Container -->
+        <div id="appWindows"></div>
     </div>
 
     <script>
         class Terminal {
             constructor() {
                 this.terminalContent = document.getElementById('terminalContent');
-                this.commandInput = document.getElementById('commandInput');
                 this.commandHistory = [];
                 this.historyIndex = -1;
                 this.currentDirectory = '~';
@@ -684,31 +735,11 @@
             }
 
             init() {
-                // Focus on input
-                this.commandInput.focus();
-
-                // Event listeners
-                this.commandInput.addEventListener('keydown', (e) => this.handleKeyDown(e));
-                this.commandInput.addEventListener('input', (e) => this.handleInput(e));
-
-                // Welcome message
-                this.printWelcome();
+                this.createNewLine();
             }
 
             updatePrompt() {
-                return `user@macbook-pro ${this.currentDirectory} %`;
-            }
-
-            printWelcome() {
-                const welcome = `
-Welcome to macOS Terminal Simulator (Client-Side)
-System: Browser-based macOS Simulator
-Hostname: macbook-pro
-Current directory: ~
-
-Type 'help' for available commands.
-`;
-                this.print(welcome, 'welcome');
+                return `stabledesktop@macbookpro-user ${this.currentDirectory} %`;
             }
 
             handleKeyDown(e) {
@@ -775,19 +806,8 @@ Type 'help' for available commands.
 Available commands:
   help                    - Show this help message
   clear                   - Clear the terminal
-  ls                      - List directory contents
-  pwd                     - Print working directory
-  whoami                  - Show current user
-  date                    - Show current date and time
-  echo [text]             - Print text
-  cat [file]              - Display file contents
-  cd [directory]          - Change directory
-  mkdir [directory]       - Create directory
-  touch [file]            - Create file
-  rm [file]               - Remove file
-  history                 - Show command history
-  exit                    - Exit terminal (reload page)
-  neofetch                - Show system information
+  stabledesktop --create  - Create a new Stable Desktop project
+  stabledesktop --agent   - Start a Stable Desktop agent
 `, 'output');
                         return true;
 
@@ -833,6 +853,19 @@ Available commands:
                            .:oooo:.                                 
                              .:o:.                                 
 `, 'output');
+                        return true;
+
+                    case 'stabledesktop --create':
+                        this.print('Stable Desktop project created successfully!', 'output');
+                        return true;
+
+                    case 'stabledesktop --agent':
+                        this.print('Stable Desktop agent started!', 'output');
+                        return true;
+
+                    case 'open app':
+                        createAppWindow('Sample App', 'This is a sample desktop app window.');
+                        this.print('App window created!', 'output');
                         return true;
 
                     default:
@@ -1076,81 +1109,128 @@ Available commands:
             new Terminal();
         });
 
-        // Terminal window controls
+        // Terminal window controls + drag + resize
         document.addEventListener('DOMContentLoaded', () => {
-            const closeBtn = document.querySelector('.terminal-button.close');
-            const minimizeBtn = document.querySelector('.terminal-button.minimize');
-            const maximizeBtn = document.querySelector('.terminal-button.maximize');
             const terminalWindow = document.getElementById('terminalWindow');
-
-            closeBtn.addEventListener('click', () => {
-                terminalWindow.style.display = 'none';
-            });
-
-            minimizeBtn.addEventListener('click', () => {
-                terminalWindow.style.transform = 'translate(-50%, 100vh)';
-                setTimeout(() => {
-                    terminalWindow.style.transform = 'translate(-50%, -50%)';
-                }, 1000);
-            });
-
-            maximizeBtn.addEventListener('click', () => {
-                if (terminalWindow.style.width === '100vw') {
-                    terminalWindow.style.width = '800px';
-                    terminalWindow.style.height = '500px';
-                } else {
-                    terminalWindow.style.width = '100vw';
-                    terminalWindow.style.height = '100vh';
-                }
-            });
-
-            // Make terminal window draggable
-            let isDragging = false;
-            let currentX;
-            let currentY;
-            let initialX;
-            let initialY;
-            let xOffset = 0;
-            let yOffset = 0;
-
             const terminalHeader = document.querySelector('.terminal-header');
 
-            terminalHeader.addEventListener('mousedown', dragStart);
-            document.addEventListener('mousemove', drag);
-            document.addEventListener('mouseup', dragEnd);
+            // Dragging
+            let isDragging = false;
+            let dragOffsetX = 0;
+            let dragOffsetY = 0;
 
-            function dragStart(e) {
-                initialX = e.clientX - xOffset;
-                initialY = e.clientY - yOffset;
-
-                if (e.target === terminalHeader) {
-                    isDragging = true;
-                }
-            }
-
-            function drag(e) {
+            terminalHeader.addEventListener('mousedown', (e) => {
+                if (e.target.closest('.terminal-buttons')) return; // Don't drag from buttons
+                isDragging = true;
+                const rect = terminalWindow.getBoundingClientRect();
+                dragOffsetX = e.clientX - rect.left;
+                dragOffsetY = e.clientY - rect.top;
+                document.body.style.userSelect = 'none';
+            });
+            document.addEventListener('mousemove', (e) => {
                 if (isDragging) {
-                    e.preventDefault();
-                    
-                    currentX = e.clientX - initialX;
-                    currentY = e.clientY - initialY;
-
-                    xOffset = currentX;
-                    yOffset = currentY;
-
-                    setTranslate(currentX, currentY, terminalWindow);
+                    let x = e.clientX - dragOffsetX;
+                    let y = e.clientY - dragOffsetY;
+                    // Keep within viewport
+                    x = Math.max(0, Math.min(window.innerWidth - terminalWindow.offsetWidth, x));
+                    y = Math.max(0, Math.min(window.innerHeight - terminalWindow.offsetHeight, y));
+                    terminalWindow.style.left = x + 'px';
+                    terminalWindow.style.top = y + 'px';
+                    terminalWindow.style.transform = '';
                 }
-            }
-
-            function setTranslate(xPos, yPos, el) {
-                el.style.transform = `translate(${xPos}px, ${yPos}px)`;
-            }
-
-            function dragEnd(e) {
-                initialX = currentX;
-                initialY = currentY;
+            });
+            document.addEventListener('mouseup', () => {
                 isDragging = false;
+                document.body.style.userSelect = '';
+            });
+
+            // Edge/corner resizing
+            let isResizing = false;
+            let resizeDir = '';
+            let resizeStartX = 0;
+            let resizeStartY = 0;
+            let startWidth = 0;
+            let startHeight = 0;
+            let startLeft = 0;
+            let startTop = 0;
+            const edgeSize = 8; // px
+
+            function getResizeDir(e) {
+                const rect = terminalWindow.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                let dir = '';
+                if (y < edgeSize) dir += 'n';
+                else if (y > rect.height - edgeSize) dir += 's';
+                if (x < edgeSize) dir += 'w';
+                else if (x > rect.width - edgeSize) dir += 'e';
+                return dir;
             }
+
+            terminalWindow.addEventListener('mousemove', (e) => {
+                if (isResizing) return;
+                const dir = getResizeDir(e);
+                terminalWindow.classList.remove(
+                    'resizing-n','resizing-s','resizing-e','resizing-w','resizing-ne','resizing-nw','resizing-se','resizing-sw'
+                );
+                if (dir) terminalWindow.classList.add('resizing-' + dir);
+            });
+            terminalWindow.addEventListener('mouseleave', () => {
+                if (!isResizing) {
+                    terminalWindow.classList.remove(
+                        'resizing-n','resizing-s','resizing-e','resizing-w','resizing-ne','resizing-nw','resizing-se','resizing-sw'
+                    );
+                }
+            });
+            terminalWindow.addEventListener('mousedown', (e) => {
+                const dir = getResizeDir(e);
+                if (!dir) return;
+                isResizing = true;
+                resizeDir = dir;
+                resizeStartX = e.clientX;
+                resizeStartY = e.clientY;
+                const rect = terminalWindow.getBoundingClientRect();
+                startWidth = rect.width;
+                startHeight = rect.height;
+                startLeft = rect.left;
+                startTop = rect.top;
+                document.body.style.userSelect = 'none';
+                e.preventDefault();
+            });
+            document.addEventListener('mousemove', (e) => {
+                if (!isResizing) return;
+                let dx = e.clientX - resizeStartX;
+                let dy = e.clientY - resizeStartY;
+                let newWidth = startWidth;
+                let newHeight = startHeight;
+                let newLeft = startLeft;
+                let newTop = startTop;
+                if (resizeDir.includes('e')) newWidth = Math.max(350, startWidth + dx);
+                if (resizeDir.includes('s')) newHeight = Math.max(200, startHeight + dy);
+                if (resizeDir.includes('w')) {
+                    newWidth = Math.max(350, startWidth - dx);
+                    newLeft = startLeft + dx;
+                }
+                if (resizeDir.includes('n')) {
+                    newHeight = Math.max(200, startHeight - dy);
+                    newTop = startTop + dy;
+                }
+                terminalWindow.style.width = newWidth + 'px';
+                terminalWindow.style.height = newHeight + 'px';
+                if (resizeDir.includes('w') || resizeDir.includes('n')) {
+                    terminalWindow.style.left = newLeft + 'px';
+                    terminalWindow.style.top = newTop + 'px';
+                    terminalWindow.style.transform = '';
+                }
+            });
+            document.addEventListener('mouseup', () => {
+                isResizing = false;
+                resizeDir = '';
+                document.body.style.userSelect = '';
+                terminalWindow.classList.remove(
+                    'resizing-n','resizing-s','resizing-e','resizing-w','resizing-ne','resizing-nw','resizing-se','resizing-sw'
+                );
+            });
         });
 
         // Finder dropdown menu JS
@@ -1198,11 +1278,62 @@ Available commands:
             appleDropdown.addEventListener('click', (e) => {
                 e.stopPropagation();
             });
-            restartMenu.addEventListener('mousedown', (e) => {
+            function doRestart(e) {
                 e.stopPropagation();
+                console.log('Restart triggered');
                 location.reload();
-            });
+            }
+            if (restartMenu) {
+                restartMenu.addEventListener('mousedown', doRestart);
+                restartMenu.addEventListener('click', doRestart);
+                restartMenu.addEventListener('mouseup', doRestart);
+            }
         });
+
+        // App window creation logic
+        function createAppWindow(title = 'Sample App', content = 'This is a sample desktop app window.') {
+            const appWindows = document.getElementById('appWindows');
+            const win = document.createElement('div');
+            win.className = 'app-window';
+            win.style.top = (120 + Math.random() * 100) + 'px';
+            win.style.left = (120 + Math.random() * 100) + 'px';
+            win.innerHTML = `
+                <div class="app-window-header">
+                    <div class="app-window-title">${title}</div>
+                    <button class="app-window-close"></button>
+                </div>
+                <div class="app-window-content">${content}</div>
+            `;
+            appWindows.appendChild(win);
+            // Close button
+            win.querySelector('.app-window-close').onclick = () => win.remove();
+            // Dragging
+            const header = win.querySelector('.app-window-header');
+            let isDragging = false, offsetX = 0, offsetY = 0;
+            header.addEventListener('mousedown', (e) => {
+                isDragging = true;
+                const rect = win.getBoundingClientRect();
+                offsetX = e.clientX - rect.left;
+                offsetY = e.clientY - rect.top;
+                document.body.style.userSelect = 'none';
+            });
+            document.addEventListener('mousemove', dragMove);
+            document.addEventListener('mouseup', dragEnd);
+            function dragMove(e) {
+                if (!isDragging) return;
+                let x = e.clientX - offsetX;
+                let y = e.clientY - offsetY;
+                // Keep within viewport
+                x = Math.max(0, Math.min(window.innerWidth - win.offsetWidth, x));
+                y = Math.max(0, Math.min(window.innerHeight - win.offsetHeight, y));
+                win.style.left = x + 'px';
+                win.style.top = y + 'px';
+            }
+            function dragEnd() {
+                isDragging = false;
+                document.body.style.userSelect = '';
+            }
+        }
     </script>
 </body>
 </html> 
