@@ -21,7 +21,7 @@
         .desktop {
             width: 100vw;
             height: 100vh;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #4f8cff 0%, #1e2746 100%);
             position: relative;
             overflow: hidden;
         }
@@ -347,6 +347,68 @@
                 font-size: 20px;
             }
         }
+
+        /* Dropdown Finder Menu */
+        .dropdown-menu {
+            display: none;
+            position: absolute;
+            top: 32px;
+            left: 0;
+            min-width: 320px;
+            background: rgba(30, 32, 36, 0.98);
+            border-radius: 8px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+            color: #fff;
+            font-size: 16px;
+            padding: 8px 0;
+            z-index: 2000;
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+        .dropdown-section {
+            border-top: 1px solid rgba(255,255,255,0.08);
+            margin-top: 4px;
+            padding-top: 4px;
+        }
+        .dropdown-section:first-child {
+            border-top: none;
+            margin-top: 0;
+            padding-top: 0;
+        }
+        .dropdown-item {
+            padding: 6px 24px;
+            cursor: pointer;
+            transition: background 0.18s;
+            white-space: nowrap;
+        }
+        .dropdown-item:hover:not(.disabled):not(.color-dot) {
+            background: rgba(80, 120, 255, 0.18);
+        }
+        .dropdown-item.disabled {
+            color: #888;
+            cursor: default;
+        }
+        .dropdown-item.color-dot {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            margin: 0 4px;
+            vertical-align: middle;
+            border: 1.5px solid #222;
+            cursor: pointer;
+            padding: 0;
+        }
+        .dropdown-section.colors {
+            padding-left: 20px;
+            padding-bottom: 4px;
+        }
+        /* Show dropdown when active */
+        .menu-item.finder.open #finderDropdown {
+            display: block;
+        }
+        .menu-item.finder {
+            position: relative;
+        }
     </style>
 </head>
 <body>
@@ -358,7 +420,51 @@
                 <div class="apple-logo">
                     <img src="icons/apple.svg" alt="Apple" class="apple-icon">
                 </div>
-                <div class="menu-item finder active">Finder</div>
+                <div class="menu-item finder active" id="finderMenuBtn">Finder
+                  <div class="dropdown-menu" id="finderDropdown">
+                    <div class="dropdown-section">
+                      <div class="dropdown-item">New Finder Window</div>
+                      <div class="dropdown-item">New Folder</div>
+                      <div class="dropdown-item">New Folder with Selection (2 Items)</div>
+                      <div class="dropdown-item">New Smart Folder</div>
+                      <div class="dropdown-item">New Tab</div>
+                      <div class="dropdown-item">Open</div>
+                      <div class="dropdown-item">Open With &rsaquo;</div>
+                      <div class="dropdown-item">Close Window</div>
+                    </div>
+                    <div class="dropdown-section">
+                      <div class="dropdown-item">Get Info</div>
+                      <div class="dropdown-item">Rename...</div>
+                      <div class="dropdown-item">Compress</div>
+                      <div class="dropdown-item">Duplicate</div>
+                      <div class="dropdown-item">Make Alias</div>
+                      <div class="dropdown-item">Quick Look</div>
+                      <div class="dropdown-item">Print</div>
+                    </div>
+                    <div class="dropdown-section">
+                      <div class="dropdown-item">Share...</div>
+                      <div class="dropdown-item disabled">Show Original</div>
+                      <div class="dropdown-item">Add to Dock</div>
+                      <div class="dropdown-item">Move to Trash</div>
+                      <div class="dropdown-item">Eject</div>
+                    </div>
+                    <div class="dropdown-section colors">
+                      <div class="dropdown-item color-dot" style="background:#ff3b30"></div>
+                      <div class="dropdown-item color-dot" style="background:#ffcc00"></div>
+                      <div class="dropdown-item color-dot" style="background:#4cd964"></div>
+                      <div class="dropdown-item color-dot" style="background:#007aff"></div>
+                      <div class="dropdown-item color-dot" style="background:#5856d6"></div>
+                      <div class="dropdown-item color-dot" style="background:#ff2d55"></div>
+                      <div class="dropdown-item color-dot" style="background:#8e8e93"></div>
+                    </div>
+                    <div class="dropdown-section">
+                      <div class="dropdown-item">Tags...</div>
+                    </div>
+                    <div class="dropdown-section">
+                      <div class="dropdown-item">Find</div>
+                    </div>
+                  </div>
+                </div>
                 <div class="menu-item">File</div>
                 <div class="menu-item">Edit</div>
                 <div class="menu-item">View</div>
@@ -952,6 +1058,23 @@ Available commands:
                 initialY = currentY;
                 isDragging = false;
             }
+        });
+
+        // Finder dropdown menu JS
+        document.addEventListener('DOMContentLoaded', () => {
+            const finderBtn = document.getElementById('finderMenuBtn');
+            const finderDropdown = document.getElementById('finderDropdown');
+            
+            finderBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                finderBtn.classList.toggle('open');
+            });
+            document.addEventListener('click', (e) => {
+                finderBtn.classList.remove('open');
+            });
+            finderDropdown.addEventListener('click', (e) => {
+                e.stopPropagation();
+            });
         });
     </script>
 </body>
