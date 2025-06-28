@@ -36,7 +36,7 @@
             align-items: center;
             padding: 0 10px;
             color: #fff;
-            font-size: 20px;
+            font-size: 14px;
             font-weight: 400;
             text-shadow: 0 1px 2px rgba(0,0,0,0.18);
             position: fixed;
@@ -54,7 +54,7 @@
 
         .menu-item {
             cursor: pointer;
-            padding: 2px 8px;
+            padding: 2px 4px;
             border-radius: 4px;
             font-weight: 400;
             transition: background 0.2s;
@@ -65,12 +65,13 @@
         }
 
         .apple-logo {
-            margin-right: 10px;
+            margin-right: 4px;
+            position: relative;
         }
 
         .apple-icon {
-            height: 28px;
-            width: 28px;
+            height: 18px;
+            width: 18px;
             filter: drop-shadow(0 1px 2px rgba(0,0,0,0.18));
         }
 
@@ -409,6 +410,79 @@
         .menu-item.finder {
             position: relative;
         }
+
+        .menu-right {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            font-size: 14px;
+            color: #fff;
+        }
+        .status-icon {
+            width: 16px;
+            height: 16px;
+            filter: drop-shadow(0 1px 2px rgba(0,0,0,0.18));
+            opacity: 0.92;
+        }
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            background: #7d5fff;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 4px;
+        }
+        .menu-date {
+            font-size: 14px;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            font-family: inherit;
+        }
+        .apple-dropdown-menu {
+            display: none;
+            position: absolute;
+            top: 24px;
+            left: 0;
+            min-width: 260px;
+            background: rgba(30, 32, 36, 0.98);
+            border-radius: 8px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+            color: #fff;
+            font-size: 15px;
+            padding: 8px 0;
+            z-index: 3000;
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+        .apple-logo.open .apple-dropdown-menu {
+            display: block;
+        }
+        .apple-dropdown-menu .dropdown-item {
+            padding: 6px 24px;
+            cursor: pointer;
+            transition: background 0.18s;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .apple-dropdown-menu .dropdown-item:hover {
+            background: rgba(80, 120, 255, 0.18);
+        }
+        .apple-dropdown-menu .dropdown-divider {
+            height: 1px;
+            background: rgba(255,255,255,0.08);
+            margin: 4px 0;
+        }
+        .badge {
+            background: #444;
+            color: #fff;
+            font-size: 11px;
+            border-radius: 10px;
+            padding: 2px 8px;
+            margin-left: 8px;
+            font-weight: 600;
+            display: inline-block;
+        }
     </style>
 </head>
 <body>
@@ -417,8 +491,26 @@
         <!-- Menu Bar -->
         <div class="menu-bar">
             <div class="menu-left">
-                <div class="apple-logo">
+                <div class="apple-logo" id="appleMenuBtn">
                     <img src="icons/apple.svg" alt="Apple" class="apple-icon">
+                    <div class="apple-dropdown-menu" id="appleDropdown">
+                        <div class="dropdown-item">About This Mac</div>
+                        <div class="dropdown-divider"></div>
+                        <div class="dropdown-item">System Settings… <span class="badge">1 update</span></div>
+                        <div class="dropdown-item">Location &rsaquo;</div>
+                        <div class="dropdown-item">App Store</div>
+                        <div class="dropdown-divider"></div>
+                        <div class="dropdown-item">Recent Items &rsaquo;</div>
+                        <div class="dropdown-divider"></div>
+                        <div class="dropdown-item">Force Quit Opera</div>
+                        <div class="dropdown-divider"></div>
+                        <div class="dropdown-item">Sleep</div>
+                        <div class="dropdown-item" id="restartMenu">Restart…</div>
+                        <div class="dropdown-item">Shut Down…</div>
+                        <div class="dropdown-divider"></div>
+                        <div class="dropdown-item">Lock Screen</div>
+                        <div class="dropdown-item">Log Out Stable Desktop…</div>
+                    </div>
                 </div>
                 <div class="menu-item finder active" id="finderMenuBtn">Finder
                   <div class="dropdown-menu" id="finderDropdown">
@@ -473,11 +565,12 @@
                 <div class="menu-item">Help</div>
             </div>
             <div class="menu-right">
-                <div class="menu-item">🔋 100%</div>
-                <div class="menu-item">📶</div>
-                <div class="menu-item">🔊</div>
-                <div class="menu-item">📅</div>
-                <div class="menu-item">🕐</div>
+                <img src="icons/battery.svg" class="status-icon" alt="Battery">
+                <img src="icons/network.svg" class="status-icon" alt="Network">
+                <img src="icons/search.svg" class="status-icon" alt="Search">
+                <img src="icons/control-center.svg" class="status-icon" alt="Control Center">
+                <span class="status-dot"></span>
+                <span class="menu-date" id="menuDate"></span>
             </div>
         </div>
 
@@ -1074,6 +1167,40 @@ Available commands:
             });
             finderDropdown.addEventListener('click', (e) => {
                 e.stopPropagation();
+            });
+        });
+
+        // Live date/time for menu bar
+        function updateMenuDate() {
+            const el = document.getElementById('menuDate');
+            const now = new Date();
+            const options = { weekday: 'short', month: 'short', day: 'numeric' };
+            const dateStr = now.toLocaleDateString(undefined, options);
+            const timeStr = now.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+            el.textContent = `${dateStr}  ${timeStr}`;
+        }
+        setInterval(updateMenuDate, 1000);
+        updateMenuDate();
+
+        // Apple menu dropdown JS
+        document.addEventListener('DOMContentLoaded', () => {
+            const appleBtn = document.getElementById('appleMenuBtn');
+            const appleDropdown = document.getElementById('appleDropdown');
+            const restartMenu = document.getElementById('restartMenu');
+            
+            appleBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                appleBtn.classList.toggle('open');
+            });
+            document.addEventListener('click', (e) => {
+                appleBtn.classList.remove('open');
+            });
+            appleDropdown.addEventListener('click', (e) => {
+                e.stopPropagation();
+            });
+            restartMenu.addEventListener('mousedown', (e) => {
+                e.stopPropagation();
+                location.reload();
             });
         });
     </script>
