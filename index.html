@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>macOS Desktop Terminal</title>
+    <link href="https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        .desktop {
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Menu Bar */
+        .menu-bar {
+            height: 24px;
+            background: rgba(60, 150, 210, 0.85);
+            backdrop-filter: blur(20px);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 10px;
+            color: #fff;
+            font-size: 20px;
+            font-weight: 400;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.18);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+        }
+
+        .menu-left, .menu-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .menu-item {
+            cursor: pointer;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: 400;
+            transition: background 0.2s;
+        }
+
+        .menu-item:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .apple-logo {
+            margin-right: 10px;
+        }
+
+        .apple-icon {
+            height: 28px;
+            width: 28px;
+            filter: drop-shadow(0 1px 2px rgba(0,0,0,0.18));
+        }
+
+        .menu-item.finder,
+        .menu-item.active {
+            font-weight: 600;
+        }
+
+        /* Desktop Icons */
+        .desktop-icons {
+            position: absolute;
+            top: 40px;
+            left: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .desktop-icon {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+            padding: 10px;
+            border-radius: 8px;
+            transition: background-color 0.2s;
+            max-width: 80px;
+            text-align: center;
+        }
+
+        .desktop-icon:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .icon {
+            font-size: 48px;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+        }
+
+        .icon-label {
+            font-size: 11px;
+            color: white;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+            word-wrap: break-word;
+        }
+
+        /* Terminal Window */
+        .terminal-window {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 800px;
+            height: 500px;
+            background: #1e1e1e;
+            border-radius: 10px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            z-index: 100;
+        }
+
+        .terminal-header {
+            height: 32px;
+            background: #2d2d2d;
+            display: flex;
+            align-items: center;
+            padding: 0 12px;
+            border-bottom: 1px solid #404040;
+        }
+
+        .terminal-buttons {
+            display: flex;
+            gap: 8px;
+            margin-right: 15px;
+        }
+
+        .terminal-button {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .terminal-button.close {
+            background: #ff5f56;
+        }
+
+        .terminal-button.minimize {
+            background: #ffbd2e;
+        }
+
+        .terminal-button.maximize {
+            background: #27ca3f;
+        }
+
+        .terminal-button:hover {
+            opacity: 0.8;
+        }
+
+        .terminal-title {
+            color: #b4b4b4;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .terminal-body {
+            height: calc(100% - 32px);
+            padding: 15px;
+            background: #1e1e1e;
+        }
+
+        .terminal-content {
+            height: 100%;
+            overflow-y: auto;
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.4;
+            color: #f8f8f2;
+        }
+
+        .terminal-line {
+            display: flex;
+            margin-bottom: 5px;
+        }
+
+        .prompt {
+            color: #a6e22e;
+            margin-right: 10px;
+            white-space: nowrap;
+        }
+
+        .command-input {
+            color: #f8f8f2;
+            outline: none;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .command-output {
+            color: #f8f8f2;
+            margin-left: 10px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .command-error {
+            color: #f92672;
+            margin-left: 10px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .command-welcome {
+            color: #66d9ef;
+            margin-left: 10px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        /* Dock */
+        .dock {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 8px;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(20px);
+            padding: 8px 16px;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+        }
+
+        .dock-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+            padding: 8px 4px;
+            border-radius: 8px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+
+        .dock-item:hover {
+            transform: scale(1.2);
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .dock-item.active {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .dock-icon {
+            width: 48px;
+            height: 48px;
+            object-fit: contain;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+        }
+
+        .dock-label {
+            font-size: 10px;
+            color: white;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: absolute;
+            bottom: -20px;
+            white-space: nowrap;
+        }
+
+        .dock-item:hover .dock-label {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Scrollbar styling */
+        .terminal-content::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .terminal-content::-webkit-scrollbar-track {
+            background: #2d2d2d;
+        }
+
+        .terminal-content::-webkit-scrollbar-thumb {
+            background: #555;
+            border-radius: 4px;
+        }
+
+        .terminal-content::-webkit-scrollbar-thumb:hover {
+            background: #777;
+        }
+
+        /* Responsive design */
+        @media (max-width: 1024px) {
+            .terminal-window {
+                width: 90vw;
+                height: 60vh;
+            }
+            
+            .dock {
+                gap: 4px;
+                padding: 6px 12px;
+            }
+            
+            .dock-icon {
+                font-size: 24px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .desktop-icons {
+                display: none;
+            }
+            
+            .terminal-window {
+                width: 95vw;
+                height: 70vh;
+            }
+            
+            .dock {
+                gap: 2px;
+                padding: 4px 8px;
+            }
+            
+            .dock-icon {
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Desktop Background -->
+    <div class="desktop">
+        <!-- Menu Bar -->
+        <div class="menu-bar">
+            <div class="menu-left">
+                <div class="apple-logo">
+                    <img src="icons/apple.svg" alt="Apple" class="apple-icon">
+                </div>
+                <div class="menu-item finder active">Finder</div>
+                <div class="menu-item">File</div>
+                <div class="menu-item">Edit</div>
+                <div class="menu-item">View</div>
+                <div class="menu-item">Go</div>
+                <div class="menu-item">Window</div>
+                <div class="menu-item">Help</div>
+            </div>
+            <div class="menu-right">
+                <div class="menu-item">🔋 100%</div>
+                <div class="menu-item">📶</div>
+                <div class="menu-item">🔊</div>
+                <div class="menu-item">📅</div>
+                <div class="menu-item">🕐</div>
+            </div>
+        </div>
+
+        <!-- Desktop Icons -->
+        <div class="desktop-icons">
+            <div class="desktop-icon">
+                <div class="icon">💻</div>
+                <div class="icon-label">Macintosh HD</div>
+            </div>
+            <div class="desktop-icon">
+                <div class="icon">📁</div>
+                <div class="icon-label">Documents</div>
+            </div>
+            <div class="desktop-icon">
+                <div class="icon">📁</div>
+                <div class="icon-label">Downloads</div>
+            </div>
+        </div>
+
+        <!-- Terminal Window -->
+        <div class="terminal-window" id="terminalWindow">
+            <div class="terminal-header">
+                <div class="terminal-buttons">
+                    <div class="terminal-button close"></div>
+                    <div class="terminal-button minimize"></div>
+                    <div class="terminal-button maximize"></div>
+                </div>
+                <div class="terminal-title">Terminal — zsh — 80×24</div>
+            </div>
+            <div class="terminal-body">
+                <div class="terminal-content" id="terminalContent">
+                    <div class="terminal-line">
+                        <span class="prompt">user@macbook-pro ~ %</span>
+                        <span class="command-input" id="commandInput" contenteditable="true"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dock -->
+        <div class="dock">
+            <div class="dock-item active">
+                <img class="dock-icon" src="icons/finder.png" alt="Finder">
+                <div class="dock-label">Finder</div>
+            </div>
+            <div class="dock-item">
+                <img class="dock-icon" src="icons/github.png" alt="GitHub">
+                <div class="dock-label">GitHub</div>
+            </div>
+            <div class="dock-item">
+                <img class="dock-icon" src="icons/opera.png" alt="Opera">
+                <div class="dock-label">Opera</div>
+            </div>
+            <div class="dock-item">
+                <img class="dock-icon" src="icons/preview.png" alt="Preview">
+                <div class="dock-label">Preview</div>
+            </div>
+            <div class="dock-item">
+                <img class="dock-icon" src="icons/safari.png" alt="Safari">
+                <div class="dock-label">Safari</div>
+            </div>
+            <div class="dock-item">
+                <img class="dock-icon" src="icons/terminal.png" alt="Terminal">
+                <div class="dock-label">Terminal</div>
+            </div>
+            <div class="dock-item">
+                <img class="dock-icon" src="icons/obsidian.png" alt="Obsidian">
+                <div class="dock-label">Obsidian</div>
+            </div>
+            <div class="dock-item">
+                <img class="dock-icon" src="icons/messages.png" alt="Messages">
+                <div class="dock-label">Messages</div>
+            </div>
+            <div class="dock-item">
+                <img class="dock-icon" src="icons/spark.png" alt="Spark">
+                <div class="dock-label">Spark</div>
+            </div>
+            <div class="dock-item">
+                <img class="dock-icon" src="icons/notes.png" alt="Notes">
+                <div class="dock-label">Notes</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class Terminal {
+            constructor() {
+                this.terminalContent = document.getElementById('terminalContent');
+                this.commandInput = document.getElementById('commandInput');
+                this.commandHistory = [];
+                this.historyIndex = -1;
+                this.currentDirectory = '~';
+                this.fileSystem = this.createFileSystem();
+                
+                this.init();
+            }
+
+            createFileSystem() {
+                return {
+                    '~': {
+                        type: 'directory',
+                        contents: {
+                            'Documents': { type: 'directory', contents: {} },
+                            'Downloads': { type: 'directory', contents: {} },
+                            'Desktop': { type: 'directory', contents: {} },
+                            'readme.txt': { type: 'file', content: 'Welcome to the macOS Terminal Simulator!\n\nThis is a client-side only application that simulates a terminal environment.\n\nType "help" to see available commands.' },
+                            'hello.js': { type: 'file', content: 'console.log("Hello, World!");\n\n// This is a sample JavaScript file\nfunction greet(name) {\n    return `Hello, ${name}!`;\n}\n\ngreet("macOS");' }
+                        }
+                    }
+                };
+            }
+
+            init() {
+                // Focus on input
+                this.commandInput.focus();
+
+                // Event listeners
+                this.commandInput.addEventListener('keydown', (e) => this.handleKeyDown(e));
+                this.commandInput.addEventListener('input', (e) => this.handleInput(e));
+
+                // Welcome message
+                this.printWelcome();
+            }
+
+            updatePrompt() {
+                return `user@macbook-pro ${this.currentDirectory} %`;
+            }
+
+            printWelcome() {
+                const welcome = `
+Welcome to macOS Terminal Simulator (Client-Side)
+System: Browser-based macOS Simulator
+Hostname: macbook-pro
+Current directory: ~
+
+Type 'help' for available commands.
+`;
+                this.print(welcome, 'welcome');
+            }
+
+            handleKeyDown(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    this.executeCommand();
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    this.navigateHistory('up');
+                } else if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    this.navigateHistory('down');
+                } else if (e.key === 'Tab') {
+                    e.preventDefault();
+                    this.handleTabCompletion();
+                }
+            }
+
+            handleInput(e) {
+                // Prevent line breaks
+                if (e.target.textContent.includes('\n')) {
+                    e.target.textContent = e.target.textContent.replace(/\n/g, '');
+                }
+            }
+
+            async executeCommand() {
+                const command = this.commandInput.textContent.trim();
+                
+                if (!command) {
+                    this.createNewLine();
+                    return;
+                }
+
+                // Add to history
+                this.commandHistory.push(command);
+                this.historyIndex = this.commandHistory.length;
+
+                // Display command
+                this.print(`\n${this.updatePrompt()} ${command}`, 'command');
+
+                // Handle built-in commands
+                if (this.handleBuiltInCommands(command)) {
+                    this.createNewLine();
+                    return;
+                }
+
+                // Handle file system commands
+                if (this.handleFileSystemCommands(command)) {
+                    this.createNewLine();
+                    return;
+                }
+
+                // Unknown command
+                this.print(`zsh: command not found: ${command}`, 'error');
+                this.createNewLine();
+            }
+
+            handleBuiltInCommands(command) {
+                const cmd = command.toLowerCase().trim();
+                
+                switch (cmd) {
+                    case 'help':
+                        this.print(`
+Available commands:
+  help                    - Show this help message
+  clear                   - Clear the terminal
+  ls                      - List directory contents
+  pwd                     - Print working directory
+  whoami                  - Show current user
+  date                    - Show current date and time
+  echo [text]             - Print text
+  cat [file]              - Display file contents
+  cd [directory]          - Change directory
+  mkdir [directory]       - Create directory
+  touch [file]            - Create file
+  rm [file]               - Remove file
+  history                 - Show command history
+  exit                    - Exit terminal (reload page)
+  neofetch                - Show system information
+`, 'output');
+                        return true;
+
+                    case 'clear':
+                        this.clear();
+                        return true;
+
+                    case 'date':
+                        this.print(new Date().toString(), 'output');
+                        return true;
+
+                    case 'whoami':
+                        this.print('user', 'output');
+                        return true;
+
+                    case 'pwd':
+                        this.print(this.currentDirectory, 'output');
+                        return true;
+
+                    case 'history':
+                        this.print(this.commandHistory.join('\n'), 'output');
+                        return true;
+
+                    case 'exit':
+                        window.location.reload();
+                        return true;
+
+                    case 'neofetch':
+                        this.print(`
+                    .:okOOOkdc'           'cdkOOOko:.                    user@macbook-pro
+                .xOOOOOOOOOOOOc       cOOOOOOOOOOOOx.                ---------------
+              ,OOOOOOOOOOOOOOOk,   ,kOOOOOOOOOOOOOOO,               OS: macOS Simulator
+             'OOOOOOOOOOOOOOOOO: :OOOOOOOOOOOOOOOOO'                Kernel: Browser-based
+            .OOOOOOOOOOOOOOOOOOkOOOOOOOOOOOOOOOOO.                  Uptime: ${Math.floor(Math.random() * 24)}h ${Math.floor(Math.random() * 60)}m
+            :OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO:                  Shell: zsh
+            'OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO'                  CPU: JavaScript Engine
+            .OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO.                  Memory: ${Math.floor(Math.random() * 8 + 4)}GB
+             cOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOc                    Disk: Virtual
+              :OOOOOOOOOOOOOOOOOOOOOOOOOOOOOO:                     
+               .:oooooooooooooooooooooooooo:.                      
+                   .:oooooooooooooooooo:.                          
+                       .:oooooooooo:.                              
+                           .:oooo:.                                 
+                             .:o:.                                 
+`, 'output');
+                        return true;
+
+                    default:
+                        if (cmd.startsWith('echo ')) {
+                            this.print(command.substring(5), 'output');
+                            return true;
+                        }
+                        return false;
+                }
+            }
+
+            handleFileSystemCommands(command) {
+                const parts = command.split(' ');
+                const cmd = parts[0].toLowerCase();
+                
+                switch (cmd) {
+                    case 'ls':
+                        this.listDirectory(parts.slice(1));
+                        return true;
+                    case 'cd':
+                        this.changeDirectory(parts.slice(1));
+                        return true;
+                    case 'cat':
+                        this.catFile(parts.slice(1));
+                        return true;
+                    case 'mkdir':
+                        this.makeDirectory(parts.slice(1));
+                        return true;
+                    case 'touch':
+                        this.touchFile(parts.slice(1));
+                        return true;
+                    case 'rm':
+                        this.removeFile(parts.slice(1));
+                        return true;
+                    default:
+                        return false;
+                }
+            }
+
+            listDirectory(args) {
+                const path = this.currentDirectory;
+                const dir = this.getDirectory(path);
+                
+                if (!dir) {
+                    this.print(`ls: ${path}: No such file or directory`, 'error');
+                    return;
+                }
+
+                const items = Object.keys(dir.contents);
+                if (items.length === 0) {
+                    this.print('', 'output');
+                    return;
+                }
+
+                // Simple ls output
+                this.print(items.join('  '), 'output');
+            }
+
+            changeDirectory(args) {
+                const target = args[0] || '~';
+                
+                if (target === '~' || target === '/') {
+                    this.currentDirectory = '~';
+                    return;
+                }
+
+                if (target === '..') {
+                    if (this.currentDirectory !== '~') {
+                        this.currentDirectory = '~';
+                    }
+                    return;
+                }
+
+                const currentDir = this.getDirectory(this.currentDirectory);
+                if (currentDir && currentDir.contents[target] && currentDir.contents[target].type === 'directory') {
+                    this.currentDirectory = this.currentDirectory === '~' ? target : `${this.currentDirectory}/${target}`;
+                } else {
+                    this.print(`cd: ${target}: No such file or directory`, 'error');
+                }
+            }
+
+            catFile(args) {
+                const filename = args[0];
+                if (!filename) {
+                    this.print('cat: missing file operand', 'error');
+                    return;
+                }
+
+                const currentDir = this.getDirectory(this.currentDirectory);
+                if (currentDir && currentDir.contents[filename] && currentDir.contents[filename].type === 'file') {
+                    this.print(currentDir.contents[filename].content, 'output');
+                } else {
+                    this.print(`cat: ${filename}: No such file or directory`, 'error');
+                }
+            }
+
+            makeDirectory(args) {
+                const dirname = args[0];
+                if (!dirname) {
+                    this.print('mkdir: missing operand', 'error');
+                    return;
+                }
+
+                const currentDir = this.getDirectory(this.currentDirectory);
+                if (currentDir) {
+                    if (currentDir.contents[dirname]) {
+                        this.print(`mkdir: ${dirname}: File exists`, 'error');
+                    } else {
+                        currentDir.contents[dirname] = { type: 'directory', contents: {} };
+                    }
+                }
+            }
+
+            touchFile(args) {
+                const filename = args[0];
+                if (!filename) {
+                    this.print('touch: missing file operand', 'error');
+                    return;
+                }
+
+                const currentDir = this.getDirectory(this.currentDirectory);
+                if (currentDir) {
+                    if (currentDir.contents[filename]) {
+                        // Update timestamp (in real implementation)
+                    } else {
+                        currentDir.contents[filename] = { type: 'file', content: '' };
+                    }
+                }
+            }
+
+            removeFile(args) {
+                const filename = args[0];
+                if (!filename) {
+                    this.print('rm: missing operand', 'error');
+                    return;
+                }
+
+                const currentDir = this.getDirectory(this.currentDirectory);
+                if (currentDir && currentDir.contents[filename]) {
+                    delete currentDir.contents[filename];
+                } else {
+                    this.print(`rm: ${filename}: No such file or directory`, 'error');
+                }
+            }
+
+            getDirectory(path) {
+                if (path === '~') {
+                    return this.fileSystem['~'];
+                }
+                // For simplicity, we'll only handle the root directory for now
+                return this.fileSystem['~'];
+            }
+
+            navigateHistory(direction) {
+                if (direction === 'up' && this.historyIndex > 0) {
+                    this.historyIndex--;
+                    this.commandInput.textContent = this.commandHistory[this.historyIndex];
+                } else if (direction === 'down' && this.historyIndex < this.commandHistory.length - 1) {
+                    this.historyIndex++;
+                    this.commandInput.textContent = this.commandHistory[this.historyIndex];
+                } else if (direction === 'down' && this.historyIndex === this.commandHistory.length - 1) {
+                    this.historyIndex++;
+                    this.commandInput.textContent = '';
+                }
+                
+                // Move cursor to end
+                this.moveCursorToEnd();
+            }
+
+            handleTabCompletion() {
+                // Simple tab completion for common commands
+                const input = this.commandInput.textContent.toLowerCase();
+                const commands = ['ls', 'pwd', 'cd', 'mkdir', 'rm', 'cat', 'echo', 'date', 'whoami', 'clear', 'help', 'history', 'exit', 'touch', 'neofetch'];
+                
+                for (let cmd of commands) {
+                    if (cmd.startsWith(input)) {
+                        this.commandInput.textContent = cmd;
+                        this.moveCursorToEnd();
+                        break;
+                    }
+                }
+            }
+
+            moveCursorToEnd() {
+                const range = document.createRange();
+                const selection = window.getSelection();
+                range.selectNodeContents(this.commandInput);
+                range.collapse(false);
+                selection.removeAllRanges();
+                selection.addRange(range);
+            }
+
+            print(text, type = 'output') {
+                const line = document.createElement('div');
+                line.className = `command-${type}`;
+                line.textContent = text;
+                this.terminalContent.appendChild(line);
+                this.scrollToBottom();
+            }
+
+            createNewLine() {
+                const line = document.createElement('div');
+                line.className = 'terminal-line';
+                
+                const prompt = document.createElement('span');
+                prompt.className = 'prompt';
+                prompt.textContent = this.updatePrompt();
+                
+                const input = document.createElement('span');
+                input.className = 'command-input';
+                input.contentEditable = true;
+                input.id = 'commandInput';
+                
+                line.appendChild(prompt);
+                line.appendChild(input);
+                this.terminalContent.appendChild(line);
+                
+                // Update reference and focus
+                this.commandInput = input;
+                this.commandInput.focus();
+                
+                // Add event listeners to new input
+                this.commandInput.addEventListener('keydown', (e) => this.handleKeyDown(e));
+                this.commandInput.addEventListener('input', (e) => this.handleInput(e));
+                
+                this.scrollToBottom();
+            }
+
+            clear() {
+                this.terminalContent.innerHTML = '';
+                this.createNewLine();
+            }
+
+            scrollToBottom() {
+                this.terminalContent.scrollTop = this.terminalContent.scrollHeight;
+            }
+        }
+
+        // Initialize terminal when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new Terminal();
+        });
+
+        // Terminal window controls
+        document.addEventListener('DOMContentLoaded', () => {
+            const closeBtn = document.querySelector('.terminal-button.close');
+            const minimizeBtn = document.querySelector('.terminal-button.minimize');
+            const maximizeBtn = document.querySelector('.terminal-button.maximize');
+            const terminalWindow = document.getElementById('terminalWindow');
+
+            closeBtn.addEventListener('click', () => {
+                terminalWindow.style.display = 'none';
+            });
+
+            minimizeBtn.addEventListener('click', () => {
+                terminalWindow.style.transform = 'translate(-50%, 100vh)';
+                setTimeout(() => {
+                    terminalWindow.style.transform = 'translate(-50%, -50%)';
+                }, 1000);
+            });
+
+            maximizeBtn.addEventListener('click', () => {
+                if (terminalWindow.style.width === '100vw') {
+                    terminalWindow.style.width = '800px';
+                    terminalWindow.style.height = '500px';
+                } else {
+                    terminalWindow.style.width = '100vw';
+                    terminalWindow.style.height = '100vh';
+                }
+            });
+
+            // Make terminal window draggable
+            let isDragging = false;
+            let currentX;
+            let currentY;
+            let initialX;
+            let initialY;
+            let xOffset = 0;
+            let yOffset = 0;
+
+            const terminalHeader = document.querySelector('.terminal-header');
+
+            terminalHeader.addEventListener('mousedown', dragStart);
+            document.addEventListener('mousemove', drag);
+            document.addEventListener('mouseup', dragEnd);
+
+            function dragStart(e) {
+                initialX = e.clientX - xOffset;
+                initialY = e.clientY - yOffset;
+
+                if (e.target === terminalHeader) {
+                    isDragging = true;
+                }
+            }
+
+            function drag(e) {
+                if (isDragging) {
+                    e.preventDefault();
+                    
+                    currentX = e.clientX - initialX;
+                    currentY = e.clientY - initialY;
+
+                    xOffset = currentX;
+                    yOffset = currentY;
+
+                    setTranslate(currentX, currentY, terminalWindow);
+                }
+            }
+
+            function setTranslate(xPos, yPos, el) {
+                el.style.transform = `translate(${xPos}px, ${yPos}px)`;
+            }
+
+            function dragEnd(e) {
+                initialX = currentX;
+                initialY = currentY;
+                isDragging = false;
+            }
+        });
+    </script>
+</body>
+</html> 

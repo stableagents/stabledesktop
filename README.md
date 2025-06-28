@@ -171,6 +171,117 @@ Stable Agents uses a simple, intuitive language for describing applications:
 }
 ```
 
+## 🚀 Get Started
+
+Ready to build your first desktop application? Follow this comprehensive guide to get up and running with Stable Agents in minutes.
+
+### Prerequisites
+
+Before you begin, make sure you have:
+
+- **Node.js** (version 16 or higher)
+- **npm** or **yarn** package manager
+- **Git** (optional, for version control)
+
+### Step 1: Install Stable Agents
+
+```bash
+# Using npm
+npm install -g stable-agents
+
+# Using yarn
+yarn global add stable-agents
+
+# Verify installation
+stable-agents --version
+```
+
+### Step 2: Create Your First Application
+
+1. **Create a new directory for your project:**
+   ```bash
+   mkdir my-first-app
+   cd my-first-app
+   ```
+
+2. **Create your application description file:**
+   ```bash
+   touch app.sa
+   ```
+
+3. **Open `app.sa` in your favorite editor and add:**
+   ```text
+   Create a simple note-taking application with:
+   - A text editor for writing notes
+   - Save and load functionality
+   - List of saved notes in a sidebar
+   - Search through notes
+   - Dark and light theme toggle
+   ```
+
+### Step 3: Build and Run
+
+```bash
+# Build your application
+stable-agents build app.sa
+
+# Run the application
+./dist/my-first-app
+```
+
+### Step 4: Customize and Enhance
+
+Once your basic app is running, you can enhance it:
+
+1. **Add more features** by updating your `app.sa` file
+2. **Customize the styling** with theme options
+3. **Add data persistence** for saving user data
+4. **Integrate with external APIs** for additional functionality
+
+### Step 5: Distribute Your Application
+
+```bash
+# Build for distribution
+stable-agents build app.sa --platform all
+
+# Create an installer
+stable-agents package app.sa --installer
+
+# Publish to Stable Agents Store (optional)
+stable-agents publish app.sa
+```
+
+### Next Steps
+
+- **Explore Examples**: Check out our [example applications](https://github.com/stable-agents/examples) for inspiration
+- **Read Documentation**: Dive deeper into [advanced features](https://docs.stable-agents.com)
+- **Join the Community**: Connect with other developers and share your creations
+
+### Common Issues and Solutions
+
+**Installation Problems:**
+```bash
+# If you get permission errors on macOS/Linux
+sudo npm install -g stable-agents
+
+# Clear npm cache if needed
+npm cache clean --force
+```
+
+**Build Issues:**
+```bash
+# Check your Node.js version
+node --version
+
+# Update Stable Agents
+npm update -g stable-agents
+```
+
+**Runtime Errors:**
+- Ensure your `app.sa` file has valid syntax
+- Check that all required features are properly described
+- Verify system permissions for file access
+
 ## 🔧 Development
 
 ### Local Development
@@ -270,13 +381,6 @@ stable-agents sign app.sa --certificate path/to/cert.p12
 - **Data Visualization**: Charts, dashboards, and reports
 - **Content Creation**: Editors, viewers, and processors
 - **Automation**: Task automation and workflow tools
-
-## 🤝 Community
-
-- **Discord**: [Join our community](https://discord.gg/stable-agents)
-- **GitHub**: [Report issues](https://github.com/stable-agents/core/issues)
-- **Documentation**: [Full docs](https://docs.stable-agents.com)
-- **Examples**: [Sample applications](https://github.com/stable-agents/examples)
 
 ## 📄 License
 
